@@ -1,0 +1,419 @@
+basePath: /
+definitions:
+  dto.APIError:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.APIResponse:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/dto.APIError'
+      request_id:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.AuthInfo:
+    properties:
+      credentials:
+        type: string
+      type:
+        type: string
+    type: object
+  dto.CurlConverterRequest:
+    properties:
+      curl_command:
+        description: CurlCommand is the full cURL command string to convert.
+        example: 'curl -X POST https://api.example.com/data -H ''Content-Type: application/json''
+          -d ''{"key":"value"}'''
+        type: string
+      languages:
+        description: |-
+          Languages lists the target languages to generate code for.
+          If empty, all supported languages are returned.
+        example:
+        - '["go"'
+        - '"python"]'
+        items:
+          type: string
+        type: array
+    required:
+    - curl_command
+    type: object
+  dto.CurlConverterResponse:
+    properties:
+      json:
+        allOf:
+        - $ref: '#/definitions/dto.ParsedCurl'
+        description: JSON is a structured representation of the parsed cURL command.
+      snippets:
+        additionalProperties:
+          type: string
+        description: Snippets maps language name to generated code string.
+        type: object
+    type: object
+  dto.HTTPInspectorRequest:
+    properties:
+      curl_command:
+        description: CurlCommand is an optional cURL command string to be parsed and
+          inspected.
+        example: 'curl -X POST https://api.example.com/data -H ''Content-Type: application/json''
+          -d ''{"key":"value"}'''
+        type: string
+      raw_http:
+        description: 'RawHTTP is an optional raw HTTP/1.1 request (e.g. "GET /path
+          HTTP/1.1\r\nHost: …").'
+        example: "GET /ping?foo=bar HTTP/1.1\r\nHost: example.com\r\n\r\n"
+        type: string
+    type: object
+  dto.HTTPInspectorResponse:
+    properties:
+      authorization:
+        $ref: '#/definitions/dto.AuthInfo'
+      body:
+        type: string
+      content_type:
+        type: string
+      cookies:
+        additionalProperties:
+          type: string
+        type: object
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      parsed_form:
+        additionalProperties:
+          type: string
+        type: object
+      parsed_json: {}
+      path:
+        type: string
+      query_params:
+        additionalProperties:
+          type: string
+        type: object
+      url:
+        type: string
+    type: object
+  dto.HealthResponse:
+    properties:
+      env:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
+  dto.JSONGeneratorRequest:
+    properties:
+      json:
+        description: JSON is the raw JSON string to generate type definitions from.
+        example: '{"name":"Alice","age":30,"address":{"city":"NYC"}}'
+        type: string
+      root_name:
+        description: RootName is the optional name for the root type. Defaults to
+          "Root".
+        example: User
+        type: string
+    required:
+    - json
+    type: object
+  dto.JSONGeneratorResponse:
+    properties:
+      go_struct:
+        description: GoStruct is the generated Go struct definition.
+        type: string
+      typescript_interface:
+        description: TypeScriptInterface is the generated TypeScript interface definition.
+        type: string
+    type: object
+  dto.JWTDecodeRequest:
+    properties:
+      secret:
+        description: Secret is optional. When provided the signature is verified.
+        type: string
+      token:
+        description: Token is the full JWT string (header.payload.signature).
+        type: string
+    required:
+    - token
+    type: object
+  dto.JWTDecodeResponse:
+    properties:
+      error:
+        type: string
+      expires_at:
+        type: string
+      header:
+        additionalProperties: true
+        type: object
+      issued_at:
+        type: string
+      not_before:
+        type: string
+      payload:
+        additionalProperties: true
+        type: object
+      signature:
+        type: string
+      valid:
+        type: boolean
+    type: object
+  dto.JWTGenerateRequest:
+    properties:
+      claims:
+        additionalProperties: true
+        description: Claims are the custom payload claims to embed in the token.
+        type: object
+      expires_in_seconds:
+        description: ExpiresInSeconds is the token TTL in seconds. Defaults to 3600
+          if zero.
+        example: 3600
+        type: integer
+      secret:
+        description: Secret is the HMAC-SHA256 signing key.
+        example: my-super-secret
+        type: string
+    required:
+    - claims
+    - secret
+    type: object
+  dto.JWTGenerateResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.ParsedCurl:
+    properties:
+      body:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: A stateless developer toolbox providing HTTP inspection, cURL conversion,
+    JWT toolkit, and JSON generation.
+  title: DevHelp API
+  version: 1.0.0
+paths:
+  /api/v1/curl-converter:
+    post:
+      consumes:
+      - application/json
+      description: Parses a cURL command and returns equivalent code in Go, Python,
+        Java, C, C++, Ruby, JavaScript, and Kotlin.
+      parameters:
+      - description: cURL command input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CurlConverterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CurlConverterResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Convert a cURL command to multiple languages
+      tags:
+      - cURL Converter
+  /api/v1/curl-converter/languages:
+    get:
+      description: Returns the list of languages the cURL Converter can generate code
+        for.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: List supported languages
+      tags:
+      - cURL Converter
+  /api/v1/health:
+    get:
+      description: Returns the health status of the DevHelp API.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HealthResponse'
+              type: object
+      summary: Health check
+      tags:
+      - Health
+  /api/v1/http-inspector:
+    post:
+      consumes:
+      - application/json
+      description: Parses a raw HTTP request or cURL command and returns a detailed
+        structural breakdown.
+      parameters:
+      - description: Raw HTTP or cURL input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.HTTPInspectorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HTTPInspectorResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Inspect an HTTP request
+      tags:
+      - HTTP Inspector
+  /api/v1/json-generator:
+    post:
+      consumes:
+      - application/json
+      description: Parses a JSON payload and returns equivalent Go struct and TypeScript
+        interface definitions.
+      parameters:
+      - description: JSON generation input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JSONGeneratorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.JSONGeneratorResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Generate type definitions from JSON
+      tags:
+      - JSON Generator
+  /api/v1/jwt/decode:
+    post:
+      consumes:
+      - application/json
+      description: Decodes a JWT and returns header, payload, signature, and time
+        claims. Optionally verifies the signature.
+      parameters:
+      - description: JWT decode input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JWTDecodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.JWTDecodeResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Decode a JWT
+      tags:
+      - JWT Toolkit
+  /api/v1/jwt/generate:
+    post:
+      consumes:
+      - application/json
+      description: Signs and returns a new HS256 JWT with the provided claims and
+        secret.
+      parameters:
+      - description: JWT generation input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JWTGenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.JWTGenerateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Generate a JWT
+      tags:
+      - JWT Toolkit
+schemes:
+- http
+- https
+swagger: "2.0"

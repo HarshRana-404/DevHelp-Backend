@@ -1,0 +1,29 @@
+# Binaries
+bin/
+*.exe
+
+# Air
+tmp/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage.out
+coverage.html
+
+# Build
+dist/

@@ -1,0 +1,26 @@
+# Air configuration for live-reload during development.
+# Install: go install github.com/air-verse/air@latest
+# Run:     air
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/devhelp ./cmd/main.go"
+  bin = "tmp/devhelp"
+  full_bin = "APP_ENV=development ./tmp/devhelp"
+  include_ext = ["go", "yaml", "yml"]
+  exclude_dir = ["tmp", "logs", "docs", "tests"]
+  delay = 1000
+  stop_on_error = true
+  log = "build-errors.log"
+  kill_delay = "0s"
+
+[log]
+  time = true
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"

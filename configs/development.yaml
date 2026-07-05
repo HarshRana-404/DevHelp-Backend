@@ -1,0 +1,18 @@
+app:
+  name: "DevHelp"
+  env: "development"
+  port: 8080
+  version: "1.0.0"
+  timeout_seconds: 30
+
+rate_limiter:
+  requests_per_minute: 100
+
+cors:
+  allowed_origins:
+    - "*"
+
+log:
+  level: "debug"
+  file_enabled: true
+  file_dir: "logs"
