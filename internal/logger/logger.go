@@ -39,9 +39,12 @@ func New(cfg *config.Config) (*zap.Logger, error) {
 		if cfg.Log.FileEnabled && cfg.Log.FileDir != "" {
 			fileCore, fileErr := buildFileCore(cfg.Log.FileDir, encoderCfg, level)
 			if fileErr != nil {
-				return nil, fileErr
+				// Log the warning to console but don't crash — file logging is
+				// a nice-to-have in development, not a hard requirement.
+				fmt.Fprintf(os.Stderr, "warning: file logging disabled: %v\n", fileErr)
+			} else {
+				cores = append(cores, fileCore)
 			}
-			cores = append(cores, fileCore)
 		}
 	} else {
 		// JSON stdout for production — consumed by container log aggregators.

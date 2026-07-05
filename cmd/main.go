@@ -39,7 +39,9 @@ func main() {
 	// ── 1. Determine environment ─────────────────────────────────────────────
 	env := os.Getenv("APP_ENV")
 	if env == "" {
-		env = "development"
+		// Default to production in any containerised/unknown environment.
+		// Explicitly set APP_ENV=development to enable dev mode locally.
+		env = "production"
 	}
 
 	// ── 2. Load configuration ────────────────────────────────────────────────
